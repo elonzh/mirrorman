@@ -1,1 +1,9 @@
-cacheDir: "tests/.cache/"
+addr: ":9876"
+verbose: true
+cache:
+  dir: "tests/.cache/"
+  rules:
+    - name: "cache all"
+      conditions:
+        - type: "UrlMatches"
+          regex: ".*"

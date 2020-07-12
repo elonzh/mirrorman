@@ -1,6 +1,8 @@
-.PHONY: build run test snapshot release
+.PHONY: lint build run test snapshot release
+lint:
+	golangci-lint run
 build:
-	go build -o ./build/mirrorman ./main.go
+	go build -o ./build/mirrorman ./cmd/mirrorman/main.go
 
 ARGS ?= server
 run: build

@@ -18,7 +18,7 @@ func Test_urlToFilepath(t *testing.T) {
 			if err != nil {
 				t.Fail()
 			}
-			if got := urlToFilepath(u); got != tt.want {
+			if got := urlToFilepath("", u); got != tt.want {
 				t.Errorf("urlToFilepath() = %v, want %v", got, tt.want)
 			}
 		})

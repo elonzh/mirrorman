@@ -1,41 +1,33 @@
 package server
 
 import (
-	"log"
 	"net/http"
-	"regexp"
 
 	"github.com/elazarl/goproxy"
 
 	"github.com/elonzh/mirrorman/pkg/cache"
+	"github.com/elonzh/mirrorman/pkg/config"
 )
 
 type Server struct {
-	Proxy *goproxy.ProxyHttpServer
-	Addr  string
+	proxy *goproxy.ProxyHttpServer
+	cfg   *config.Config
 }
 
 func (s *Server) Serve() {
-	s.Proxy.Logger.Printf("server started, listening at %s", s.Addr)
-	log.Fatalln(http.ListenAndServe(s.Addr, s.Proxy))
+	s.proxy.Logger.Printf("server started, listening at %s", s.cfg.Addr)
+	s.proxy.Logger.Printf("server exit: %s", http.ListenAndServe(s.cfg.Addr, s.proxy))
 }
 
-func (s *Server) Init() {
-	s.Proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-	// https://github.com/gohugoio/hugo/releases/download/v0.73.0/hugo_0.73.0_Linux-64bit.deb
-	pattern := regexp.MustCompile(".*mirrors.huaweicloud.com.*")
-	s.Proxy.OnRequest(
-		goproxy.ReqHostMatches(pattern),
-	).DoFunc(cache.LoadCache)
-	s.Proxy.OnResponse(
-		goproxy.ReqHostMatches(pattern),
-	).DoFunc(cache.SaveCache)
-}
-
-func NewServer() *Server {
-	proxy := goproxy.NewProxyHttpServer()
-	return &Server{
-		Proxy: proxy,
-		Addr:  "",
+func NewServer(cfg *config.Config) *Server {
+	s := &Server{
+		proxy: goproxy.NewProxyHttpServer(),
+		cfg:   cfg,
 	}
+	s.proxy.Verbose = s.cfg.Verbose
+	s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
+
+	b := cache.NewFsBackend(s.cfg.Cache)
+	b.Register(s.proxy)
+	return s
 }

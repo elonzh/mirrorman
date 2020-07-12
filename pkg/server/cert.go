@@ -7,7 +7,7 @@ import (
 	"github.com/elazarl/goproxy"
 )
 
-var CA_CERT = []byte(`-----BEGIN CERTIFICATE-----
+var caCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIGBTCCA+2gAwIBAgIUClho5mwY9gKWrD4iDF3C1LS+/DAwDQYJKoZIhvcNAQEL
 BQAwgZExCzAJBgNVBAYTAkNOMQ8wDQYDVQQIDAZDZW50ZXIxDDAKBgNVBAcMA0xv
 ZDESMBAGA1UECgwJTWlycm9yTWFuMRIwEAYDVQQLDAlNaXJyb3JNYW4xHDAaBgNV
@@ -43,7 +43,7 @@ VQNp+Yy1egtRq7tsQuBTitzzmiRO5oLj9gyg2K72W68eRYl1koDG0CU2oI53SgaE
 vqU/6b6LQjjy
 -----END CERTIFICATE-----`)
 
-var CA_KEY = []byte(`-----BEGIN RSA PRIVATE KEY-----
+var caKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
 MIIJKQIBAAKCAgEAm25HLuSEITu4T2c9rABgWqDZI6l1QjpbZ7VbjXDtspPzMu5R
 wH1QhackgGlqHQlaZnM/1c5J7uYSEi6CT1DoHVMMNUUcANwrR97VoWlXRkeFHbJT
 78nygCLkSsd2KXn1M9C5BXhxeQUfMxjjWsVOs983fd76IUm4z+VNedW3sky03qjz
@@ -95,7 +95,7 @@ n9RgbHdhtviH/NZKsTfdKJvOGtEh+N7DmnvHVKAvTfVj0TvQ0z+2vvLNhLKyG8dF
 OLpsD6L46GKstgR7zMFwQCjOVKtER6NdtDk+tWYS0zAYY2lzu2ySmdkFW6e5
 -----END RSA PRIVATE KEY-----`)
 
-var MirrormanCa, caErr = tls.X509KeyPair(CA_CERT, CA_KEY)
+var MirrormanCa, caErr = tls.X509KeyPair(caCert, caKey)
 
 func init() {
 	if caErr != nil {

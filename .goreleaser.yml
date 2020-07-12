@@ -20,7 +20,7 @@ builds:
         goarch: 386
       - goos: windows
         goarch: 386
-    main: ./main.go
+    main: ./cmd/mirrorman/main.go
 
 archives:
   - format_overrides:
