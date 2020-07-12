@@ -1,0 +1,9 @@
+# see https://golangci-lint.run/usage/configuration/
+linters:
+  enable:
+    - gocyclo
+    - gofmt
+    - goimports
+    - govet
+    - staticcheck
+    - structcheck
