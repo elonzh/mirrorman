@@ -1,5 +1,12 @@
 addr: ":9876"
 verbose: true
+rewrite:
+  rules:
+    - name: "cache all"
+      conditions:
+        - type: "UrlMatches"
+          regex: ".*storage.googleapis.com/golang/(.*)"
+      replace: ".*dl.google.com/go/$1"
 cache:
   dir: "tests/.cache/"
   rules:

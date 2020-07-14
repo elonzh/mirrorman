@@ -11,7 +11,11 @@ import (
 type Config struct {
 	Verbose bool
 	Addr    string
+	Rewrite *Rewrite
 	Cache   *Cache
+}
+
+type Rewrite struct {
 }
 
 type Cache struct {

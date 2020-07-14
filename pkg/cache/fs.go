@@ -32,6 +32,30 @@ func NewFsBackend(cfg *config.Cache) *FsBackend {
 	}
 }
 
+func (b *FsBackend) Register(proxy *goproxy.ProxyHttpServer) {
+	b.log = proxy.Logger
+	for _, rule := range b.cfg.Rules {
+		reqConditions := make([]goproxy.ReqCondition, 0)
+		respConditions := make([]goproxy.RespCondition, 0)
+		for _, cond := range rule.Conditions {
+			t := cond["type"]
+			switch t {
+			case "UrlMatches":
+				// TODO: check regex
+				c := goproxy.UrlMatches(regexp.MustCompile(cond["regex"]))
+				reqConditions = append(reqConditions, c)
+				respConditions = append(respConditions, c)
+			default:
+				b.log.Printf("unspported condition type: %s", t)
+				os.Exit(1)
+			}
+		}
+		proxy.OnRequest(reqConditions...).DoFunc(b.CacheGet)
+		proxy.OnResponse(respConditions...).DoFunc(b.CacheSet)
+		b.log.Printf("registered rule: %s", rule.Name)
+	}
+}
+
 func (b *FsBackend) CacheGet(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	p := urlToFilepath(b.cfg.Dir, req.URL)
 	_, err := os.Stat(p)
@@ -48,29 +72,6 @@ func (b *FsBackend) CacheGet(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 	http.ServeFile(rw, req, p)
 	ctx.UserData = ContextData{"cached": "true"}
 	return req, rw.Response
-}
-
-func (b *FsBackend) Register(proxy *goproxy.ProxyHttpServer) {
-	b.log = proxy.Logger
-	for _, rule := range b.cfg.Rules {
-		reqConditions := make([]goproxy.ReqCondition, 0)
-		respConditions := make([]goproxy.RespCondition, 0)
-		for _, cond := range rule.Conditions {
-			t := cond["type"]
-			switch t {
-			case "UrlMatches":
-				c := goproxy.UrlMatches(regexp.MustCompile(cond["regex"]))
-				reqConditions = append(reqConditions, c)
-				respConditions = append(respConditions, c)
-			default:
-				b.log.Printf("unspported condition type: %s", t)
-				os.Exit(1)
-			}
-		}
-		proxy.OnRequest(reqConditions...).DoFunc(b.CacheGet)
-		proxy.OnResponse(respConditions...).DoFunc(b.CacheSet)
-		b.log.Printf("registered rule: %s", rule.Name)
-	}
 }
 
 func (b *FsBackend) checkCacheable(resp *http.Response) error {
@@ -113,6 +114,8 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 		ctx.Warnf("error when mkdir: %s", err)
 		return resp
 	}
+	// TODO: file integrity check
+	// TODO: thread safe read and write
 	file, err := os.Create(p)
 	if err != nil {
 		ctx.Warnf("error when creat file %s: %s", p, err)
