@@ -5,7 +5,21 @@ import (
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
+)
+
+var (
+	validate      = validator.New()
+	defaultConfig = &Config{
+		Rewrite: &Rewrite{
+			Rules: []*RewriteRule{},
+		},
+		Cache: &Cache{
+			Dir:   "",
+			Rules: nil,
+		},
+	}
 )
 
 type Config struct {
@@ -13,26 +27,6 @@ type Config struct {
 	Addr    string
 	Rewrite *Rewrite
 	Cache   *Cache
-}
-
-type Rewrite struct {
-}
-
-type Cache struct {
-	Dir   string
-	Rules []*Rule
-}
-
-type Rule struct {
-	Name       string
-	Conditions []map[string]string
-}
-
-var defaultConfig = &Config{
-	Cache: &Cache{
-		Dir:   "",
-		Rules: nil,
-	},
 }
 
 func LoadConfig(cfgFile string) *Config {
@@ -49,17 +43,20 @@ func LoadConfig(cfgFile string) *Config {
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		log.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalln("err when read config file:", err)
 	}
-	// TODO: validate config
 	cfg := defaultConfig
 	err := viper.Unmarshal(cfg)
 	if err != nil {
-		log.Fatalln("err when load config:", cfg)
+		log.Fatalln("err when unmarshal config:", cfgFile)
 	}
 	if cfg.Verbose {
 		spew.Dump(cfg)
+	}
+	err = validate.Struct(cfg)
+	if err != nil {
+		log.Fatalln("invalid config:", err)
 	}
 	return cfg
 }

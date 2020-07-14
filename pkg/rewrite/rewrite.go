@@ -10,10 +10,15 @@ import (
 )
 
 type Rewriter struct {
+	cfg *config.Rewrite
 }
 
 func NewRewriter(cfg *config.Rewrite) *Rewriter {
-	return &Rewriter{}
+	// TODO: move compile
+	for _, rule := range cfg.Rules {
+		rule.CompiledPattern = regexp.MustCompile(rule.Pattern)
+	}
+	return &Rewriter{cfg: cfg}
 }
 
 func (r *Rewriter) Register(proxy *goproxy.ProxyHttpServer) {
@@ -21,16 +26,15 @@ func (r *Rewriter) Register(proxy *goproxy.ProxyHttpServer) {
 }
 
 func (r *Rewriter) Rewrite(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	// TODO: WIP
-	p := regexp.MustCompile("https://storage.googleapis.com.*/golang/(.*)")
 	originURL := req.URL.String()
-	if !p.MatchString(originURL) {
-		ctx.Logf("%s does not match rewrite rule", originURL)
-		return req, nil
+	for _, rule := range r.cfg.Rules {
+		if rule.CompiledPattern.MatchString(originURL) {
+			url := rule.CompiledPattern.ReplaceAllString(originURL, rule.Replace)
+			resp := goproxy.NewResponse(req, "", http.StatusFound, "")
+			resp.Header.Set("Location", url)
+			ctx.Logf("rewrite %s to  %s", originURL, url)
+			return req, resp
+		}
 	}
-	url := p.ReplaceAllString(originURL, "https://dl.google.com/go/$1")
-	resp := goproxy.NewResponse(req, "", http.StatusFound, "")
-	resp.Header.Set("Location", url)
-	ctx.Logf("rewrite %s to  %s", originURL, url)
-	return req, resp
+	return req, nil
 }

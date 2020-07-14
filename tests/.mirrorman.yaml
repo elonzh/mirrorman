@@ -1,16 +1,14 @@
-addr: ":9876"
+# use single quote to avoid escape sequences
+addr: ':9876'
 verbose: true
 rewrite:
   rules:
-    - name: "cache all"
-      conditions:
-        - type: "UrlMatches"
-          regex: ".*storage.googleapis.com/golang/(.*)"
-      replace: ".*dl.google.com/go/$1"
+    - pattern: '.*storage\.googleapis\.com.*\/golang\/(.*)'
+      replace: 'https://dl.google.com/go/$1'
 cache:
-  dir: "tests/.cache/"
+  dir: 'tests/.cache/'
   rules:
-    - name: "cache all"
+    - name: 'cache all'
       conditions:
-        - type: "UrlMatches"
-          regex: ".*"
+        - type: 'UrlMatches'
+          pattern: '.*'
