@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/elazarl/goproxy"
 
@@ -36,6 +37,9 @@ func NewServer(cfg *config.Config) *Server {
 		cfg:   cfg,
 	}
 	s.proxy.Verbose = s.cfg.Verbose
+	if s.proxy.Verbose {
+		s.proxy.NonproxyHandler = http.DefaultServeMux
+	}
 	s.register()
 	return s
 }
