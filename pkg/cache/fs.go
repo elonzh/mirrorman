@@ -3,11 +3,12 @@ package cache
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 
@@ -96,39 +97,80 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 		ctx.Warnf("response is not cacheable: %s", err)
 		return resp
 	}
-	// TODO: reduce memory usage
 	resp = ctx.Resp
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		ctx.Warnf("cannot read response: %s", err)
-		return resp
-	}
-	_ = resp.Body.Close()
-
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	// TODO: parse filename from header
 	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
 	p := urlToFilepath(b.cfg.Dir, ctx.Req.URL)
-	err = os.MkdirAll(path.Dir(p), os.ModePerm)
-	if err != nil {
-		ctx.Warnf("error when mkdir: %s", err)
-		return resp
-	}
 	// TODO: file integrity check
 	// TODO: thread safe read and write
-	file, err := os.Create(p)
+	// TODO: if we have too many requests for a file at the same time, the server may run out of disk space
+	tee, err := newTeeFile(resp.Body, p)
 	if err != nil {
 		ctx.Warnf("error when creat file %s: %s", p, err)
 		return resp
 	}
-	defer file.Close()
-	_, _ = file.Write(body)
-	ctx.Logf("file saved: %s", p)
+	resp.Body = tee
+	// TODO: parse filename from header
+	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
+	// TODO: file integrity check
+	// TODO: clean up temp files
 	return resp
 }
 
 func urlToFilepath(baseDir string, url *url.URL) string {
 	return filepath.Join(baseDir, url.Scheme, url.Host, url.Path)
+}
+
+func newTeeFile(r io.ReadCloser, filename string) (io.ReadCloser, error) {
+	file, err := ioutil.TempFile("", "mirrorman_*.download")
+	if err != nil {
+		return nil, err
+	}
+	return &teeFile{
+		r:       r,
+		tmpFile: file,
+		dst:     filename,
+	}, nil
+}
+
+type teeFile struct {
+	r       io.ReadCloser
+	tmpFile *os.File
+	dst     string
+}
+
+func (t *teeFile) Read(p []byte) (n int, err error) {
+	n, err = t.r.Read(p)
+	if n > 0 {
+		if n, err := t.tmpFile.Write(p[:n]); err != nil {
+			return n, err
+		}
+	}
+	return
+}
+
+func (t *teeFile) Close() error {
+	err := t.r.Close()
+	if err != nil {
+		return err
+	}
+	log.Println("close reader")
+	err = t.tmpFile.Close()
+	log.Println("close tmpFile:", t.tmpFile.Name(), err)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(filepath.Dir(t.dst), os.ModePerm)
+	log.Println("MkdirAll:", filepath.Dir(t.dst), err)
+	if err != nil {
+		return err
+	}
+	err = os.Rename(t.tmpFile.Name(), t.dst)
+	log.Println("rename tmpFile:", t.tmpFile.Name(), t.dst, err)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewResponseWriter(r *http.Request, status int) *responseWriter {
