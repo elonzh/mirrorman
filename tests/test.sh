@@ -9,11 +9,13 @@ downloads_dir="tests/downloads"
 rm -rf ${cache_dir} ${downloads_dir}
 mkdir -p ${downloads_dir}
 cd ${downloads_dir}
+# TODO: using unit tests
 urls=(
 #  "https://github.com/gohugoio/hugo/releases/download/v0.73.0/hugo_0.73.0_Linux-64bit.deb"
 #  "https://github.com/gohugoio/hugo/archive/v0.73.0.tar.gz"
 #  "https://mirrors.huaweicloud.com/helm/v3.2.4/helm-v3.2.4-linux-amd64.tar.gz"
-  "https://storage.googleapis.com/golang/go1.13.4.linux-amd64.tar.gz"
+  "https://mirrors.aliyun.com/ubuntu-releases/19.10/ubuntu-19.10-live-server-amd64.iso"
+#  "https://storage.googleapis.com/golang/go1.13.4.linux-amd64.tar.gz"
 )
 for i in "${!urls[@]}"; do
   url=${urls[$i]}
