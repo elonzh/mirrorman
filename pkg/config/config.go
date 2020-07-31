@@ -23,10 +23,11 @@ var (
 )
 
 type Config struct {
-	Verbose bool
-	Addr    string
-	Rewrite *Rewrite
-	Cache   *Cache
+	Verbose   bool
+	HttpAddr  string
+	ProxyAddr string
+	Rewrite   *Rewrite
+	Cache     *Cache
 }
 
 func LoadConfig(cfgFile string) *Config {
