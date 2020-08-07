@@ -76,6 +76,9 @@ func (b *FsBackend) CacheGet(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 }
 
 func (b *FsBackend) checkCacheable(resp *http.Response) error {
+	if resp == nil {
+		return fmt.Errorf("nil response")
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("invalid status code, [%s]%s %d", resp.Request.Method, resp.Request.URL, resp.StatusCode)
 	}
@@ -118,6 +121,7 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 }
 
 func urlToFilepath(baseDir string, url *url.URL) string {
+	// FIXME: query support
 	return filepath.Join(baseDir, url.Scheme, url.Host, url.Path)
 }
 
@@ -166,6 +170,7 @@ func (t *teeFile) Close() error {
 		return err
 	}
 	err = os.Rename(t.tmpFile.Name(), t.dst)
+	// FIXME: invalid cross-device link
 	log.Println("rename tmpFile:", t.tmpFile.Name(), t.dst, err)
 	if err != nil {
 		return err
