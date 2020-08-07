@@ -12,6 +12,8 @@ import (
 var (
 	validate      = validator.New()
 	defaultConfig = &Config{
+		HttpAddr:  ":8080",
+		ProxyAddr: ":8081",
 		Rewrite: &Rewrite{
 			Rules: []*RewriteRule{},
 		},
