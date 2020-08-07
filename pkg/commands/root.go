@@ -1,7 +1,14 @@
 package commands
 
 import (
+	"fmt"
 	"log"
+	"path"
+	"runtime"
+
+	nested "github.com/antonfisher/nested-logrus-formatter"
+	"github.com/sirupsen/logrus"
+	"github.com/zput/zxcTool/ztLog/zt_formatter"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,6 +45,17 @@ func NewExecutor() *Executor {
 			log.Fatalln("err when get flag `config`:", e)
 		}
 		e.cfg = config.LoadConfig(cfgFile)
+		logrus.SetReportCaller(true)
+		logrus.SetFormatter(&zt_formatter.ZtFormatter{
+			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+				filename := path.Base(f.File)
+				return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
+			},
+			Formatter: nested.Formatter{},
+		})
+		if e.cfg.Verbose {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
 	})
 	return e
 }

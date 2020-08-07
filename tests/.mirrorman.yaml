@@ -1,5 +1,4 @@
 # use single quote to avoid escape sequences
-addr: ':9876'
 verbose: true
 rewrite:
   rules:
