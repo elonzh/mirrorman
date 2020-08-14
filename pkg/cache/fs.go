@@ -120,14 +120,37 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 	return resp
 }
 
+func validateFilename(filename string) error {
+	// TODO: need implementation
+	return nil
+}
+
+func makeTempFile(filename string) (*os.File, error) {
+	dir := filepath.Dir(filename)
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	// using the same directory to avoid fs issues like invalid cross-device link
+	file, err := ioutil.TempFile(dir, filepath.Base(filename)+".download_*")
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
 func newTeeFile(r io.ReadCloser, filename string) (io.ReadCloser, error) {
-	file, err := ioutil.TempFile("", "mirrorman_*.download")
+	err := validateFilename(filename)
+	if err != nil {
+		return nil, err
+	}
+	tmpFile, err := makeTempFile(filename)
 	if err != nil {
 		return nil, err
 	}
 	return &teeFile{
 		r:       r,
-		tmpFile: file,
+		tmpFile: tmpFile,
 		dst:     filename,
 	}, nil
 }
@@ -159,13 +182,7 @@ func (t *teeFile) Close() error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(filepath.Dir(t.dst), os.ModePerm)
-	log.Println("MkdirAll:", filepath.Dir(t.dst), err)
-	if err != nil {
-		return err
-	}
 	err = os.Rename(t.tmpFile.Name(), t.dst)
-	// FIXME: invalid cross-device link
 	log.Println("rename tmpFile:", t.tmpFile.Name(), t.dst, err)
 	if err != nil {
 		return err
