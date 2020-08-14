@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/elonzh/mirrorman/pkg/config"
+	"github.com/elonzh/mirrorman/pkg/httptool"
 )
 
 type ContextData map[string]string
@@ -58,7 +58,7 @@ func (b *FsBackend) Register(proxy *goproxy.ProxyHttpServer) {
 }
 
 func (b *FsBackend) CacheGet(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	p := urlToFilepath(b.cfg.Dir, req.URL)
+	p := httptool.UrlToFilepath(b.cfg.Dir, req.URL)
 	_, err := os.Stat(p)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -103,7 +103,7 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 	resp = ctx.Resp
 	// TODO: parse filename from header
 	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
-	p := urlToFilepath(b.cfg.Dir, ctx.Req.URL)
+	p := httptool.UrlToFilepath(b.cfg.Dir, ctx.Req.URL)
 	// TODO: file integrity check
 	// TODO: thread safe read and write
 	// TODO: if we have too many requests for a file at the same time, the server may run out of disk space
@@ -118,11 +118,6 @@ func (b *FsBackend) CacheSet(resp *http.Response, ctx *goproxy.ProxyCtx) *http.R
 	// TODO: file integrity check
 	// TODO: clean up temp files
 	return resp
-}
-
-func urlToFilepath(baseDir string, url *url.URL) string {
-	// FIXME: query support
-	return filepath.Join(baseDir, url.Scheme, url.Host, url.Path)
 }
 
 func newTeeFile(r io.ReadCloser, filename string) (io.ReadCloser, error) {
