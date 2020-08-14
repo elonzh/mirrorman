@@ -53,11 +53,11 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	req.URL = realUrl
-	logrus.WithFields(logrus.Fields{
-		"url":    req.URL.String(),
-		"header": req.Header,
-	}).Debugln("sending request by http server")
-	// FIXME: using proxy server may cause some site reject the request
+	req.Host = ""
+	req.RequestURI = ""
+	// http server mod will get all cookies from all sites if we using browser
+	delete(req.Header, "Cookie")
+
 	s.proxy.ServeHTTP(writer, req)
 }
 
