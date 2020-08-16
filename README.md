@@ -6,6 +6,6 @@ A simple proxy server for speeding up downloads.
 
 ## V1 Roadmap
 
--[ ] cache rules
--[ ] url rewrite rules
--[ ] peer proxy
+- [ ] cache rules
+- [ ] url rewrite rules
+- [ ] peer proxy

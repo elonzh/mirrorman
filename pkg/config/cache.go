@@ -1,8 +1,9 @@
 package config
 
 type Cache struct {
-	Dir   string
-	Rules []*CacheRule
+	Backend string
+	Options map[string]interface{}
+	Rules   []*CacheRule
 }
 
 type CacheRule struct {

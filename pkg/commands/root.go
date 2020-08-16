@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"runtime"
 
@@ -42,7 +41,7 @@ func NewExecutor() *Executor {
 	cobra.OnInitialize(func() {
 		cfgFile, err := e.rootCmd.PersistentFlags().GetString("config")
 		if err != nil {
-			log.Fatalln("err when get flag `config`:", e)
+			logrus.WithError(err).Fatalln("error when get flag `config`")
 		}
 		e.cfg = config.LoadConfig(cfgFile)
 		logrus.SetReportCaller(true)
