@@ -93,13 +93,13 @@ func (s *Server) Serve() {
 		cancel()
 	}()
 	go func() {
-		s.proxy.Logger.Printf("proxy server started, listening at %s", s.cfg.ProxyAddr)
-		s.proxy.Logger.Printf("proxy server exit: %s", proxyServer.ListenAndServe())
+		logrus.Infof("proxy server started, listening at %s", s.cfg.ProxyAddr)
+		logrus.Infof("proxy server exit: %s", proxyServer.ListenAndServe())
 		cancel()
 	}()
 	go func() {
-		s.proxy.Logger.Printf("http server started, listening at %s", s.cfg.HttpAddr)
-		s.proxy.Logger.Printf("http server exit: %s", httpServer.ListenAndServe())
+		logrus.Infof("http server started, listening at %s", s.cfg.HttpAddr)
+		logrus.Infof("http server exit: %s", httpServer.ListenAndServe())
 		cancel()
 	}()
 	<-ctx.Done()
@@ -108,11 +108,8 @@ func (s *Server) Serve() {
 func (s *Server) register() {
 	s.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 
-	b := cache.NewFsBackend(s.cfg.Cache)
-	b.Register(s.proxy)
-
-	r := rewrite.NewRewriter(s.cfg.Rewrite)
-	r.Register(s.proxy)
+	cache.NewCache(s.cfg.Cache).Register(s.proxy)
+	rewrite.NewRewriter(s.cfg.Rewrite).Register(s.proxy)
 }
 
 func NewServer(cfg *config.Config) *Server {
@@ -120,6 +117,7 @@ func NewServer(cfg *config.Config) *Server {
 		proxy: goproxy.NewProxyHttpServer(),
 		cfg:   cfg,
 	}
+	s.proxy.Logger = logrus.StandardLogger()
 	s.proxy.Verbose = s.cfg.Verbose
 	s.register()
 	return s

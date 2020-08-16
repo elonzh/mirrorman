@@ -1,11 +1,11 @@
 package config
 
 import (
-	"log"
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -18,8 +18,8 @@ var (
 			Rules: []*RewriteRule{},
 		},
 		Cache: &Cache{
-			Dir:   "",
-			Rules: nil,
+			Backend: "disk",
+			Rules:   nil,
 		},
 	}
 )
@@ -38,7 +38,7 @@ func LoadConfig(cfgFile string) *Config {
 	} else {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			log.Fatalln(err)
+			logrus.Fatalln(err)
 		}
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".mirroroman")
@@ -47,19 +47,19 @@ func LoadConfig(cfgFile string) *Config {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalln("err when read config file:", err)
+		logrus.WithError(err).Fatalln("error when read config file")
 	}
 	cfg := defaultConfig
 	err := viper.Unmarshal(cfg)
 	if err != nil {
-		log.Fatalln("err when unmarshal config:", cfgFile)
+		logrus.WithError(err).Fatalln("error when unmarshal config")
 	}
 	if cfg.Verbose {
 		spew.Dump(cfg)
 	}
 	err = validate.Struct(cfg)
 	if err != nil {
-		log.Fatalln("invalid config:", err)
+		logrus.WithError(err).Fatalln("invalid config")
 	}
 	return cfg
 }

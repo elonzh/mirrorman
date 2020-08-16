@@ -5,7 +5,9 @@ rewrite:
     - pattern: '.*storage\.googleapis\.com.*\/golang\/(.*)'
       replace: 'https://dl.google.com/go/$1'
 cache:
-  dir: 'tests/.cache/'
+  backend: 'disk'
+  options:
+    basePath: 'tests/.cache/'
   rules:
     - name: 'cache all'
       conditions:

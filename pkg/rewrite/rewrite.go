@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/elazarl/goproxy"
+	"github.com/sirupsen/logrus"
 
 	"github.com/elonzh/mirrorman/pkg/config"
 )
@@ -32,7 +33,7 @@ func (r *Rewriter) Rewrite(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Requ
 			url := rule.CompiledPattern.ReplaceAllString(originURL, rule.Replace)
 			resp := goproxy.NewResponse(req, "", http.StatusFound, "")
 			resp.Header.Set("Location", url)
-			ctx.Logf("rewrite %s to  %s", originURL, url)
+			logrus.Debugf("rewrite %s to  %s", originURL, url)
 			return req, resp
 		}
 	}
