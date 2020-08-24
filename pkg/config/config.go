@@ -46,11 +46,14 @@ func LoadConfig(cfgFile string) *Config {
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		logrus.WithError(err).Fatalln("error when read config file")
+	err := viper.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			logrus.WithError(err).Fatalln("error when read config file")
+		}
 	}
 	cfg := defaultConfig
-	err := viper.Unmarshal(cfg)
+	err = viper.Unmarshal(cfg)
 	if err != nil {
 		logrus.WithError(err).Fatalln("error when unmarshal config")
 	}
