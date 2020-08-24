@@ -21,6 +21,7 @@ func makeTempFile(filename string) (*os.File, error) {
 		return nil, err
 	}
 	// using the same directory to avoid fs issues like invalid cross-device link
+	// TODO: if we have too many requests for a file at the same time, the server may run out of disk space
 	file, err := ioutil.TempFile(dir, filepath.Base(filename)+".download_*")
 	if err != nil {
 		return nil, err
@@ -50,10 +51,18 @@ type teeFile struct {
 	dst     string
 }
 
+func (t *teeFile) cleanup() {
+	err := os.Remove(t.tmpFile.Name())
+	if err != nil && !os.IsNotExist(err) {
+		logrus.WithError(err).WithField("filename", t.tmpFile.Name()).Warnln("error when clean up file")
+	}
+}
+
 func (t *teeFile) Read(p []byte) (n int, err error) {
 	n, err = t.r.Read(p)
 	if n > 0 {
 		if n, err := t.tmpFile.Write(p[:n]); err != nil {
+			t.cleanup()
 			return n, err
 		}
 	}
@@ -61,6 +70,7 @@ func (t *teeFile) Read(p []byte) (n int, err error) {
 }
 
 func (t *teeFile) Close() error {
+	defer t.cleanup()
 	err := t.r.Close()
 	if err != nil {
 		return err

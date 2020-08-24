@@ -54,18 +54,12 @@ func (c *Cache) Set(resp *http.Response) *http.Response {
 	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
 	p := httptool.UrlToFilepath(c.opts.BasePath, resp.Request.URL)
 	// TODO: file integrity check
-	// TODO: thread safe read and write
-	// TODO: if we have too many requests for a file at the same time, the server may run out of disk space
 	tee, err := NewTeeFile(resp.Body, p)
 	if err != nil {
 		logrus.WithError(err).Warnf("error when create file %s", p)
 		return resp
 	}
 	resp.Body = tee
-	// TODO: parse filename from header
-	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
-	// TODO: file integrity check
-	// TODO: clean up temp files
 	return resp
 }
 
