@@ -21,6 +21,7 @@ builds:
       - goos: windows
         goarch: 386
     main: ./cmd/mirrorman/main.go
+    ldflags: -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}}
 
 archives:
   - format_overrides:
@@ -60,12 +61,3 @@ snapshot:
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
 dist: dist
-sign:
-  cmd: gpg
-  args:
-    - --output
-    - $signature
-    - --detach-sig
-    - $artifact
-  signature: ${artifact}.sig
-  artifacts: none

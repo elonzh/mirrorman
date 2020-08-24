@@ -16,17 +16,21 @@ import (
 )
 
 type Executor struct {
-	cfg     *config.Config
-	rootCmd *cobra.Command
+	version, commit, date string
+	cfg                   *config.Config
+	rootCmd               *cobra.Command
 }
 
 func (e *Executor) Execute() error {
 	return e.rootCmd.Execute()
 }
 
-func NewExecutor() *Executor {
+func NewExecutor(version, commit, date string) *Executor {
 	var cfgFile string
 	e := &Executor{
+		version: version,
+		commit:  commit,
+		date:    date,
 		rootCmd: &cobra.Command{
 			Use: "mirroroman",
 		},
@@ -37,6 +41,7 @@ func NewExecutor() *Executor {
 	if err != nil {
 		panic(err)
 	}
+	e.initVersionCommand()
 	e.initServeCommand()
 	cobra.OnInitialize(func() {
 		cfgFile, err := e.rootCmd.PersistentFlags().GetString("config")
